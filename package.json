@@ -1,0 +1,20 @@
+{
+  "name": "beacon",
+  "version": "0.1.0",
+  "private": true,
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "build": "npm.cmd run build --workspaces --if-present",
+    "dev": "npm.cmd run dev --workspaces --if-present",
+    "lint": "npm.cmd run lint --workspaces --if-present",
+    "test": "npm.cmd run test --workspaces --if-present"
+  },
+  "devDependencies": {
+    "@types/node": "^25.9.1",
+    "tsx": "^4.22.3",
+    "typescript": "^6.0.3"
+  }
+}
