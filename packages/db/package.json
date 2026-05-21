@@ -5,7 +5,15 @@
   "type": "module",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
+  "exports": {
+    ".": "./dist/index.js"
+  },
   "scripts": {
     "build": "tsc -p tsconfig.json"
+  },
+  "dependencies": {
+    "@beacon/shared": "^0.1.0",
+    "drizzle-orm": "^0.45.2",
+    "pg": "^8.21.0"
   }
 }
