@@ -12,6 +12,7 @@
     "@beacon/db": "^0.1.0",
     "@beacon/shared": "^0.1.0",
     "bullmq": "^5.76.10",
-    "drizzle-orm": "^0.45.2"
+    "drizzle-orm": "^0.45.2",
+    "nodemailer": "^7.0.5"
   }
 }
