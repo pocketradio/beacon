@@ -4,6 +4,7 @@ import express, { type NextFunction, type Request, type Response } from "express
 import jwt from "jsonwebtoken";
 import { z } from "zod";
 
+import { db, notificationPreferences } from "@beacon/db";
 import { createDeliveryQueue, getEnv, type Urgency } from "@beacon/shared";
 
 const URGENCIES: readonly Urgency[] = ["critical", "high", "normal", "low"];
@@ -62,6 +63,13 @@ const eventBody = z.object({
   metadata: z.record(z.string(), z.unknown()).optional()
 });
 
+const preferenceBody = z.object({
+  category: z.string().min(1),
+  channel: z.enum(["email", "push", "both"]).default("both"),
+  cooldownSecs: z.number().int().min(0).default(300),
+  isOptedOut: z.boolean().default(false)
+});
+
 
 function requireAuth(req: Request, res: Response, next: NextFunction): void {
   const header = req.header("authorization");
@@ -115,6 +123,43 @@ app.post("/v1/events", requireAuth, async (req: Request, res: Response) => {
   );
 
   res.status(202).json({ jobId, status: "queued" });
+});
+
+app.post("/v1/preferences", requireAuth, async (req: Request, res: Response) => {
+  const parsed = preferenceBody.safeParse(req.body);
+  if (!parsed.success) {
+    res.status(400).json({ error: "invalid payload", details: z.flattenError(parsed.error) });
+    return;
+  }
+
+  const auth = (req as AuthedRequest).auth;
+  if (!auth) {
+    res.status(401).json({ error: "unauthenticated" });
+    return;
+  }
+
+  await db
+    .insert(notificationPreferences)
+    .values({
+      tenantId: auth.tenantId,
+      userId: auth.userId,
+      ...parsed.data
+    })
+    .onConflictDoUpdate({
+      target: [
+        notificationPreferences.tenantId,
+        notificationPreferences.userId,
+        notificationPreferences.category
+      ],
+      set: {
+        channel: parsed.data.channel,
+        cooldownSecs: parsed.data.cooldownSecs,
+        isOptedOut: parsed.data.isOptedOut,
+        updatedAt: new Date()
+      }
+    });
+
+  res.json({ status: "saved" });
 });
 
 app.listen(env.API_PORT, () => {
